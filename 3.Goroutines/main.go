@@ -2,11 +2,17 @@ package main
 
 import (
 	"fmt"
+	"sync"
 	"time"
 )
 
 func main() {
 	coal := 0
+	mx := sync.Mutex{}
+
+	mx.Lock()
+	fmt.Println("")
+	mx.Unlock()
 
 	transferPoint := make(chan int)
 
