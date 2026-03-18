@@ -1,0 +1,58 @@
+package postman
+
+import (
+	"context"
+	"fmt"
+	"sync"
+	"time"
+)
+
+func postman(ctx context.Context, wg *sync.WaitGroup, transferPoint chan<- string, n int, mail string) {
+	defer wg.Done()
+	for {
+		select {
+		case <-ctx.Done():
+			fmt.Println("Я почтальон номер:", n, "Мой рабочий день закончился!")
+			return
+		default:
+			fmt.Println("Я почтальон номер:", n, "Взял письмо!")
+			time.Sleep(time.Second * 1)
+			fmt.Println("Я почтальон номер:", n, "Донес письмо до почты:", mail)
+
+			transferPoint <- mail
+			fmt.Println("Я почтальон номер:", n, "Передал письмо:", mail)
+		}
+
+	}
+}
+func PostmanPool(ctx context.Context, postmanCount int) <-chan string {
+
+	mailPoint := make(chan string)
+
+	wg := &sync.WaitGroup{}
+
+	for i := 1; i <= postmanCount; i++ {
+		wg.Add(1)
+		go postman(ctx, wg, mailPoint, i, postmanToMail(i))
+	}
+
+	go func() {
+		wg.Wait()
+		close(mailPoint)
+	}()
+
+	return mailPoint
+}
+
+func postmanToMail(postmanNum int) string {
+	ptm := map[int]string{
+		1: "Семейный привет",
+		2: "Приглашение от друга",
+		3: "Информация из автосервиса",
+	}
+	mail, ok := ptm[postmanNum]
+	if !ok {
+		return "Лотерея"
+	}
+	return mail
+}
